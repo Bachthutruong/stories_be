@@ -3,9 +3,18 @@ services:
     name: stories-post-backend
     env: node
     plan: free
-    buildCommand: npm install && npm run build
-    startCommand: node index.js
+    buildCommand: |
+      echo "Installing dependencies..."
+      npm install
+      echo "Building TypeScript..."
+      npm run build
+      echo "Build completed. Checking dist directory:"
+      ls -la dist/
+    startCommand: |
+      echo "Starting application with npm run render..."
+      npm run render
     healthCheckPath: /health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
