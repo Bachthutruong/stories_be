@@ -2,11 +2,12 @@
   "name": "stories-post-backend",
   "version": "1.0.0",
   "description": "Backend for Stories Post application",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "build": "tsc",
+    "postinstall": "npm run build",
     "seed": "node src/seed-data.js"
   },
   "dependencies": {

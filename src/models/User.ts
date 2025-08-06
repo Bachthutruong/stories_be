@@ -45,4 +45,7 @@ UserSchema.index(
     { unique: true, partialFilterExpression: { email: { $exists: true, $ne: null } } }
 );
 
+// Add index for phoneNumber queries (phoneNumber is already unique)
+// UserSchema.index({ phoneNumber: 1 }); // Not needed as phoneNumber is already unique
+
 export default models.User || model('User', UserSchema); 

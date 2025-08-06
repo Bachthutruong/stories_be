@@ -14,7 +14,7 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit (increased)
+    fileSize: 10 * 1024 * 1024, // 10MB limit (Cloudinary free plan limit)
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype.startsWith('image/')) {
@@ -87,11 +87,11 @@ router.post('/create-with-account', upload.array('images', 5), async (req, res) 
       return res.status(400).json({ message: 'Name, phone number, and email are required' });
     }
 
-    // Try to find existing user
+    // Try to find existing user by phone number only
     let user = await User.findOne({ phoneNumber });
     
     if (!user) {
-      // Create new user (not admin)
+      // Create new user (not admin) - only when phone number is unique
       user = new User({
         name,
         phoneNumber,
@@ -101,7 +101,7 @@ router.post('/create-with-account', upload.array('images', 5), async (req, res) 
       });
       await user.save();
     } else {
-      // Update user info if needed
+      // User exists with same phone number, update name and email if needed
       if (user.name !== name || user.email !== email) {
         user.name = name;
         user.email = email;

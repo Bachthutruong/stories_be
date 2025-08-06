@@ -9,7 +9,7 @@ const router = express.Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB limit (increased)
+    fileSize: 10 * 1024 * 1024, // 10MB limit (Cloudinary free plan limit)
   },
   fileFilter: (req, file, cb) => {
     // Check file type
