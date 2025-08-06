@@ -3,12 +3,15 @@
   "version": "1.0.0",
   "description": "Backend for Stories Post application",
   "main": "dist/index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
     "build": "tsc",
     "postinstall": "npm run build",
-    "seed": "node src/seed-data.js"
+    "seed": "node src/seed-data.js",
+    "prestart": "npm run build",
+    "render-start": "npm run build && node dist/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

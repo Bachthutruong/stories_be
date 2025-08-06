@@ -150,7 +150,7 @@ router.post('/create-with-account', upload.array('images', 5), async (req, res) 
     });
     
     const sequentialNumber = (todayPosts + 1).toString().padStart(3, '0');
-    const postId = `${year}_${month}_${day}_${hours}_HEMUNG_${sequentialNumber}`;
+    const postId = `${year}${month}${day}${hours}_HEMUNG_${sequentialNumber}`;
 
     const post = new Post({
       postId,
@@ -217,7 +217,7 @@ router.post('/', auth, async (req: any, res) => {
     });
     
     const sequentialNumber = (todayPosts + 1).toString().padStart(3, '0');
-    const postId = `${year}_${month}_${day}_${hours}_HEMUNG_${sequentialNumber}`;
+    const postId = `${year}${month}${day}${hours}_HEMUNG_${sequentialNumber}`;
 
     // Validate images from Cloudinary
     const validatedImages = images ? images.filter((img: any) => 
@@ -331,7 +331,7 @@ router.get('/:id/like-status', auth, async (req: any, res) => {
   }
 });
 
-// Like post
+// Like post (authenticated users)
 router.post('/:id/like', auth, async (req: any, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -359,6 +359,64 @@ router.post('/:id/like', auth, async (req: any, res) => {
     } else {
       // Like: add the like
       const newLike = new Like({ userId, postId: req.params.id });
+      await newLike.save();
+      post.likes += 1;
+      await post.save();
+      
+      res.json({ 
+        likes: post.likes, 
+        isLiked: true,
+        message: 'Post liked successfully' 
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Like post (non-authenticated users with name)
+router.post('/:id/like-guest', async (req, res) => {
+  try {
+    const { userName } = req.body;
+    
+    if (!userName || !userName.trim()) {
+      return res.status(400).json({ message: 'User name is required' });
+    }
+    
+    const post = await Post.findById(req.params.id);
+    
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    // For guest users, we'll use a combination of name and IP
+    const guestId = `guest_${userName.trim()}_${req.ip}`;
+    
+    // Check if this guest already liked this post
+    const existingLike = await Like.findOne({ 
+      guestId, 
+      postId: req.params.id 
+    });
+    
+    if (existingLike) {
+      // Unlike: remove the like
+      await Like.findByIdAndDelete(existingLike._id);
+      post.likes = Math.max(0, post.likes - 1);
+      await post.save();
+      
+      res.json({ 
+        likes: post.likes, 
+        isLiked: false,
+        message: 'Post unliked successfully' 
+      });
+    } else {
+      // Like: add the like
+      const newLike = new Like({ 
+        guestId, 
+        postId: req.params.id,
+        userName: userName.trim()
+      });
       await newLike.save();
       post.likes += 1;
       await post.save();
@@ -456,7 +514,7 @@ router.get('/:id/comments', async (req, res) => {
   }
 });
 
-// Add comment to a post
+// Add comment to a post (authenticated users)
 router.post('/:id/comments', auth, async (req: any, res) => {
   try {
     const { content } = req.body;
@@ -483,6 +541,42 @@ router.post('/:id/comments', auth, async (req: any, res) => {
     
     // Populate user info before sending response
     await comment.populate('userId', 'name phoneNumber email');
+    
+    res.json(comment);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Add comment to a post (guest users)
+router.post('/:id/comments-guest', async (req, res) => {
+  try {
+    const { content, userName } = req.body;
+    
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({ message: 'Comment content is required' });
+    }
+    
+    if (!userName || userName.trim().length === 0) {
+      return res.status(400).json({ message: 'User name is required' });
+    }
+    
+    const comment = new Comment({
+      postId: req.params.id,
+      userName: userName.trim(),
+      content: content.trim(),
+      userIp: req.ip || req.connection.remoteAddress || 'unknown',
+    });
+    
+    await comment.save();
+    
+    // Update post comment count
+    const post = await Post.findById(req.params.id);
+    if (post) {
+      post.commentsCount += 1;
+      await post.save();
+    }
     
     res.json(comment);
   } catch (error) {

@@ -110,24 +110,104 @@ router.get('/lottery/winners', async (req, res) => {
   }
 });
 
+// Get current lotteries (public endpoint)
+router.get('/lottery/current', async (req, res) => {
+  try {
+    const currentLotteries = await Lottery.find({ 
+      status: { $in: ['upcoming', 'active'] }
+    })
+    .populate('participants', 'name phoneNumber email')
+    .sort({ startDate: 1 });
+    
+    res.json(currentLotteries);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Create test lottery data (for development only)
 router.post('/lottery/test-data', async (req, res) => {
   try {
-    // Create test lottery with winner
-    const testLottery = new Lottery({
-      name: "Test Lottery 2025",
-      description: "A test lottery for demonstration",
-      startDate: new Date("2025-01-01"),
-      endDate: new Date("2025-12-31"),
-      prize: "$1000",
-      maxParticipants: 100,
-      status: "completed",
-      winner: "688c46d0d413b7089aca8cba", // Test User ID
-      drawnAt: new Date("2025-01-15")
-    });
+    // Clear existing test data
+    await Lottery.deleteMany({ name: { $regex: /^Test Lottery/ } });
     
-    await testLottery.save();
-    res.json({ message: "Test data created", lottery: testLottery });
+    // Create multiple test lotteries with winners
+    const testLotteries = [
+      {
+        name: "Test Lottery Tháng 1 - 2025",
+        description: "Cuộc xổ số đầu năm với giải thưởng hấp dẫn",
+        startDate: new Date("2025-01-01"),
+        endDate: new Date("2025-01-31"),
+        prize: "$2000",
+        maxParticipants: 150,
+        status: "completed",
+        winner: "688c46d0d413b7089aca8cba",
+        drawnAt: new Date("2025-02-01"),
+        participants: ["688c46d0d413b7089aca8cba", "688c46d0d413b7089aca8cbb"]
+      },
+      {
+        name: "Test Lottery Tháng 2 - 2025",
+        description: "Cuộc xổ số tháng 2 với nhiều phần quà giá trị",
+        startDate: new Date("2025-02-01"),
+        endDate: new Date("2025-02-28"),
+        prize: "$1500",
+        maxParticipants: 200,
+        status: "completed",
+        winner: "688c46d0d413b7089aca8cba",
+        drawnAt: new Date("2025-03-01"),
+        participants: ["688c46d0d413b7089aca8cba", "688c46d0d413b7089aca8cbb", "688c46d0d413b7089aca8cbc"]
+      },
+      {
+        name: "Test Lottery Tháng 3 - 2025",
+        description: "Cuộc xổ số mùa xuân với giải thưởng đặc biệt",
+        startDate: new Date("2025-03-01"),
+        endDate: new Date("2025-03-31"),
+        prize: "$3000",
+        maxParticipants: 300,
+        status: "completed",
+        winner: "688c46d0d413b7089aca8cba",
+        drawnAt: new Date("2025-04-01"),
+        participants: ["688c46d0d413b7089aca8cba", "688c46d0d413b7089aca8cbb", "688c46d0d413b7089aca8cbc", "688c46d0d413b7089aca8cbd"]
+      },
+      {
+        name: "Test Lottery Tháng 4 - 2025",
+        description: "Cuộc xổ số tháng 4 với nhiều cơ hội trúng giải",
+        startDate: new Date("2025-04-01"),
+        endDate: new Date("2025-04-30"),
+        prize: "$2500",
+        maxParticipants: 250,
+        status: "completed",
+        winner: "688c46d0d413b7089aca8cba",
+        drawnAt: new Date("2025-05-01"),
+        participants: ["688c46d0d413b7089aca8cba", "688c46d0d413b7089aca8cbb", "688c46d0d413b7089aca8cbc"]
+      },
+      {
+        name: "Test Lottery Tháng 5 - 2025",
+        description: "Cuộc xổ số tháng 5 với giải thưởng lớn",
+        startDate: new Date("2025-05-01"),
+        endDate: new Date("2025-05-31"),
+        prize: "$5000",
+        maxParticipants: 500,
+        status: "completed",
+        winner: "688c46d0d413b7089aca8cba",
+        drawnAt: new Date("2025-06-01"),
+        participants: ["688c46d0d413b7089aca8cba", "688c46d0d413b7089aca8cbb", "688c46d0d413b7089aca8cbc", "688c46d0d413b7089aca8cbd", "688c46d0d413b7089aca8cbe"]
+      }
+    ];
+
+    const createdLotteries = [];
+    for (const lotteryData of testLotteries) {
+      const lottery = new Lottery(lotteryData);
+      await lottery.save();
+      createdLotteries.push(lottery);
+    }
+    
+    res.json({ 
+      message: "Test lottery data created successfully", 
+      count: createdLotteries.length,
+      lotteries: createdLotteries 
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
