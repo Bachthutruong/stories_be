@@ -1,14 +1,24 @@
 #!/bin/bash
 
-# Build the TypeScript code
-echo "Building TypeScript..."
-npm run build
+# Exit on any error
+set -e
 
-# Check if build was successful
-if [ $? -eq 0 ]; then
-    echo "Build successful. Starting server..."
-    node dist/index.js
-else
-    echo "Build failed. Exiting."
+echo "Starting deployment process..."
+
+# Check if dist directory exists and has the compiled files
+if [ ! -f "dist/index.js" ]; then
+    echo "Compiled JavaScript not found. Building TypeScript..."
+    npm run build
+fi
+
+# Verify the build was successful
+if [ ! -f "dist/index.js" ]; then
+    echo "ERROR: Build failed - dist/index.js not found"
     exit 1
-fi 
+fi
+
+echo "Build successful. Starting server..."
+echo "Running: node dist/index.js"
+
+# Start the server
+exec node dist/index.js 
