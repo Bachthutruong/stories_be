@@ -2,7 +2,7 @@
 
 ## Cấu hình đúng cho Render Deployment
 
-### File cấu hình chính: `backend/render.yaml`
+### File cấu hình chính: `backend/render.yaml` (DUY NHẤT)
 ```yaml
 services:
   - type: web
@@ -47,8 +47,10 @@ services:
 - ✅ Health check endpoint
 
 ### Lưu ý quan trọng:
-- File render.yaml phải ở trong thư mục backend
-- Không cần file render.yaml ở root level
+- **CHỈ** có file render.yaml trong thư mục backend
+- **KHÔNG** có file render.yaml ở root level
+- **KHÔNG** có file render.yaml ở bất kỳ đâu khác
 - Đảm bảo tất cả environment variables được set trong Render dashboard
+- Render sẽ tự động nhận diện file render.yaml trong thư mục backend
 
 Deployment này sẽ hoạt động đúng cách trên Render. 
