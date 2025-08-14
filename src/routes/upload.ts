@@ -21,7 +21,7 @@ const upload = multer({
   },
 });
 
-// Upload single image
+// Upload single image (authenticated)
 router.post('/image', auth, upload.single('image'), async (req: any, res) => {
   try {
     if (!req.file) {
@@ -61,7 +61,7 @@ router.post('/image', auth, upload.single('image'), async (req: any, res) => {
   }
 });
 
-// Upload multiple images
+// Upload multiple images (authenticated)
 router.post('/images', auth, upload.array('images', 5), async (req: any, res) => {
   try {
     if (!req.files || req.files.length === 0) {
@@ -76,6 +76,92 @@ router.post('/images', auth, upload.array('images', 5), async (req: any, res) =>
       // Upload to Cloudinary
       const result = await cloudinary.uploader.upload(dataURI, {
         folder: 'stories-post',
+        resource_type: 'image',
+        transformation: [
+          { width: 800, height: 600, crop: 'limit' },
+          { quality: 'auto' },
+        ],
+      });
+
+      return {
+        public_id: result.public_id,
+        url: result.secure_url,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+      };
+    });
+
+    const results = await Promise.all(uploadPromises);
+
+    res.json({
+      success: true,
+      images: results,
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ 
+      message: 'Failed to upload images',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Upload single image (guest - no authentication required)
+router.post('/guest/image', upload.single('image'), async (req: any, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image file provided' });
+    }
+
+    // Convert buffer to base64
+    const b64 = Buffer.from(req.file.buffer).toString('base64');
+    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(dataURI, {
+      folder: 'stories-post-guest',
+      resource_type: 'image',
+      transformation: [
+        { width: 800, height: 600, crop: 'limit' },
+        { quality: 'auto' },
+      ],
+    });
+
+    res.json({
+      success: true,
+      image: {
+        public_id: result.public_id,
+        url: result.secure_url,
+        width: result.width,
+        height: result.height,
+        format: result.format,
+      },
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ 
+      message: 'Failed to upload image',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Upload multiple images (guest - no authentication required)
+router.post('/guest/images', upload.array('images', 5), async (req: any, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No image files provided' });
+    }
+
+    const uploadPromises = req.files.map(async (file: any) => {
+      // Convert buffer to base64
+      const b64 = Buffer.from(file.buffer).toString('base64');
+      const dataURI = `data:${file.mimetype};base64,${b64}`;
+
+      // Upload to Cloudinary
+      const result = await cloudinary.uploader.upload(dataURI, {
+        folder: 'stories-post-guest',
         resource_type: 'image',
         transformation: [
           { width: 800, height: 600, crop: 'limit' },
@@ -139,6 +225,15 @@ router.get('/status', auth, (req: any, res) => {
   res.json({
     success: true,
     message: 'Upload service is running',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Get upload status (guest - no authentication required)
+router.get('/guest/status', (req: any, res) => {
+  res.json({
+    success: true,
+    message: 'Guest upload service is running',
     timestamp: new Date().toISOString(),
   });
 });

@@ -74,13 +74,21 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create post with automatic account creation
-router.post('/create-with-account', upload.array('images', 5), async (req, res) => {
+router.post('/create-with-account', async (req, res) => {
   try {
-    // Parse FormData
+    // Parse request body
     const title = req.body.title;
     const description = req.body.description;
     const content = req.body.content;
-    const contactInfo = JSON.parse(req.body.contactInfo);
+    
+    // Handle contactInfo - it might be a string or an object
+    let contactInfo;
+    if (typeof req.body.contactInfo === 'string') {
+      contactInfo = JSON.parse(req.body.contactInfo);
+    } else {
+      contactInfo = req.body.contactInfo;
+    }
+    
     const { name, phoneNumber, email } = contactInfo || {};
 
     if (!name || !phoneNumber || !email) {
@@ -109,10 +117,18 @@ router.post('/create-with-account', upload.array('images', 5), async (req, res) 
       }
     }
 
-    // Upload images if any
+    // Handle images - they might be uploaded files or already uploaded URLs
     let uploadedImages: Array<{ url: string; public_id: string }> = [];
     
-    if (req.files && Array.isArray(req.files)) {
+    // Check if images are provided as URLs (already uploaded)
+    if (req.body.images && Array.isArray(req.body.images)) {
+      uploadedImages = req.body.images.map((img: any) => ({
+        url: img.url,
+        public_id: img.public_id,
+      }));
+    }
+    // Check if images are uploaded files
+    else if (req.files && Array.isArray(req.files)) {
       for (const file of req.files) {
         try {
           // Convert file buffer to base64 for Cloudinary
