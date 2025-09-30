@@ -58,6 +58,10 @@ const PostSchema = new Schema({
         enum: ['published', 'draft', 'archived', 'pending_review', 'rejected'],
         default: 'published',
     },
+    luckyNumber: {
+        type: String,
+        required: true,
+    },
 }, { timestamps: true });
 
 // Add indexes for better query performance

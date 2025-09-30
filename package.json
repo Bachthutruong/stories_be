@@ -2,24 +2,16 @@
   "name": "stories-post-backend",
   "version": "1.0.0",
   "description": "Backend for Stories Post application",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "commonjs",
-  "engines": {
-    "node": ">=18.0.0"
-  },
   "scripts": {
-    "start": "node index.js",
+    "start": "node dist/index.js",
     "dev": "nodemon src/index.ts",
-    "build": "rm -rf dist && tsc",
-    "build:check": "npm run build && ls -la dist/",
+    "build": "tsc",
     "postinstall": "npm run build",
     "seed": "node src/seed-data.js",
     "prestart": "npm run build",
-    "render-start": "npm run build && node dist/index.js",
-    "render-build": "npm install && npm run build",
-    "verify": "node -e \"console.log('Node.js version:', process.version); console.log('Current directory:', process.cwd()); console.log('Files in dist:', require('fs').readdirSync('./dist'));\"",
-    "render-deploy": "npm run build && node dist/index.js",
-    "render": "node index.js"
+    "render-start": "npm run build && node dist/index.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

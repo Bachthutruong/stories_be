@@ -7,6 +7,7 @@ import { auth } from '../middleware/auth';
 import cloudinary from '../config/cloudinary';
 import jwt from 'jsonwebtoken';
 import multer from 'multer';
+import { generateNextLuckyNumber } from '../utils/luckyNumber';
 
 const router = express.Router();
 
@@ -67,6 +68,22 @@ router.get('/:id', async (req, res) => {
     }
     
     res.json(post);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Get lucky number for a post
+router.get('/:id/lucky-number', async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id);
+    
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    res.json({ luckyNumber: post.luckyNumber });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
@@ -168,6 +185,9 @@ router.post('/create-with-account', async (req, res) => {
     const sequentialNumber = (todayPosts + 1).toString().padStart(3, '0');
     const postId = `${year}${month}${day}${hours}_HEMUNG_${sequentialNumber}`;
 
+    // Generate lucky number
+    const luckyNumber = await generateNextLuckyNumber();
+
     const post = new Post({
       postId,
       userId: user._id,
@@ -178,6 +198,7 @@ router.post('/create-with-account', async (req, res) => {
       contactInfo: contactInfo || null, // Store contact info if provided
       status: 'published', // Explicitly set as published
       isHidden: false, // Explicitly set as not hidden
+      luckyNumber, // Add lucky number
     });
 
     await post.save();
@@ -235,6 +256,9 @@ router.post('/', auth, async (req: any, res) => {
     const sequentialNumber = (todayPosts + 1).toString().padStart(3, '0');
     const postId = `${year}${month}${day}${hours}_HEMUNG_${sequentialNumber}`;
 
+    // Generate lucky number
+    const luckyNumber = await generateNextLuckyNumber();
+
     // Validate images from Cloudinary
     const validatedImages = images ? images.filter((img: any) => 
       img.url && img.public_id && img.url.includes('cloudinary.com')
@@ -250,6 +274,7 @@ router.post('/', auth, async (req: any, res) => {
       contactInfo: contactInfo || null, // Store contact info if provided
       status: 'published', // Explicitly set as published
       isHidden: false, // Explicitly set as not hidden
+      luckyNumber, // Add lucky number
     });
 
     await post.save();
